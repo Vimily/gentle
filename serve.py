@@ -179,7 +179,8 @@ class TranscriptionsController(Resource):
             return NOT_DONE_YET
 
         req.setResponseCode(FOUND)
-        req.setHeader(b"Location", "/transcriptions/%s" % (uid))
+        req.write(uid)
+        # req.setHeader(b"Location", "/transcriptions/%s" % (uid))
         return ''
 
 class LazyZipper(Insist):

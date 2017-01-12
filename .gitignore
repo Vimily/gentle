@@ -8,3 +8,5 @@ ext/.depend.mk
 *.pyc
 *~
 webdata/
+*.DS_Store
+__MACOSX/
