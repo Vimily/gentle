@@ -211,6 +211,7 @@ class TranscriptionZipper(Resource):
             self.putChild(path, lz)
             return lz
         else:
+            echo ("I hit it here")
             return Resource.getChild(self, path, req)
 
 def serve(port=8765, interface='0.0.0.0', installSignalHandlers=0, nthreads=4, ntranscriptionthreads=2, data_dir=get_datadir('webdata')):
