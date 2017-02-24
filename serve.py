@@ -58,6 +58,8 @@ class Transcriber():
             'transcript': transcript
         }
 
+        logger.info('STARTED')
+
         outdir = os.path.join(self.data_dir, 'transcriptions', uid)
 
         tran_path = os.path.join(outdir, 'transcript.txt')
@@ -68,6 +70,7 @@ class Transcriber():
             wavfile.write(audio)
 
         status['status'] = 'ENCODING'
+        logger.info('ENCODING')
 
         wavfile = os.path.join(outdir, 'a.wav')
         if gentle.resample(os.path.join(outdir, 'upload'), wavfile) != 0:
@@ -84,16 +87,19 @@ class Transcriber():
         wav_obj = wave.open(wavfile, 'r')
         status['duration'] = wav_obj.getnframes() / float(wav_obj.getframerate())
         status['status'] = 'TRANSCRIBING'
-
+        logger.info('TRANSCRIBING')
         def on_progress(p):
             for k,v in p.items():
                 status[k] = v
 
         if len(transcript.strip()) > 0:
+            logger.info('Checking length of transcript')
             trans = gentle.ForcedAligner(self.resources, transcript, nthreads=self.nthreads, **kwargs)
         elif self.full_transcriber.available:
+            logger.info('Full transcriber available?')
             trans = self.full_transcriber
         else:
+            logger.info('ERROR')
             status['status'] = 'ERROR'
             status['error']  = 'No transcript provided and no language model for full transcription'
             return
@@ -101,14 +107,17 @@ class Transcriber():
         output = trans.transcribe(wavfile, progress_cb=on_progress, logging=logging)
 
         # ...remove the original upload
+        logger.info('REMOVING ORIGINAL UPLOAD')
         os.unlink(os.path.join(outdir, 'upload'))
 
         # Save
+        logger.info('SAVING?')
         with open(os.path.join(outdir, 'align.json'), 'w') as jsfile:
+            logger.info('SAVING JSON')
             jsfile.write(output.to_json(indent=2))
         with open(os.path.join(outdir, 'align.csv'), 'w') as csvfile:
             csvfile.write(output.to_csv())
-
+        logger.info('FINISH SAVE')      
         # Inline the alignment into the index.html file.
         htmltxt = open(get_resource('www/view_alignment.html')).read()
         htmltxt = htmltxt.replace("var INLINE_JSON;", "var INLINE_JSON=%s;" % (output.to_json()));
@@ -137,6 +146,8 @@ class TranscriptionsController(Resource):
 
     def render_POST(self, req):
         uid = self.transcriber.next_id()
+
+        logging.info('New Post Request: ' + uid)
 
         tran = req.args.get('transcript', [''])[0]
         audio = req.args['audio'][0]
@@ -211,7 +222,6 @@ class TranscriptionZipper(Resource):
             self.putChild(path, lz)
             return lz
         else:
-            echo ("I hit it here")
             return Resource.getChild(self, path, req)
 
 def serve(port=8765, interface='0.0.0.0', installSignalHandlers=0, nthreads=4, ntranscriptionthreads=2, data_dir=get_datadir('webdata')):
