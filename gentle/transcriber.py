@@ -32,7 +32,7 @@ class MultiThreadedTranscriber:
             k = self.kaldi_queue.get()
             k.push_chunk(buf)
             ret = k.get_final()
-            k.reset()
+            # k.reset() (no longer needed)
             self.kaldi_queue.put(k)
 
             chunks.append({"start": start_t, "words": ret})
@@ -88,22 +88,26 @@ class MultiThreadedTranscriber:
 if __name__=='__main__':
     # full transcription
     from Queue import Queue
-    from util import ffmpeg
-    from gentle import standard_kaldi
-
+    import json
     import sys
 
     import logging
     logging.getLogger().setLevel('INFO')
+
+    import gentle
+    from gentle import standard_kaldi
+
+    resources = gentle.Resources()
+
     
     k_queue = Queue()
     for i in range(3):
-        k_queue.put(standard_kaldi.Kaldi())
+        k_queue.put(standard_kaldi.Kaldi(resources.nnet_gpu_path, resources.full_hclg_path, resources.proto_langdir))
 
     trans = MultiThreadedTranscriber(k_queue)
 
     with gentle.resampled(sys.argv[1]) as filename:
         out = trans.transcribe(filename)
 
-    open(sys.argv[2], 'w').write(out.to_json())
+    open(sys.argv[2], 'w').write(transcription.Transcription(words=out).to_json())
 
