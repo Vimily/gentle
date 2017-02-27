@@ -11,3 +11,4 @@ ext/.depend.mk
 *.pyc
 *~
 webdata/
+config.py
