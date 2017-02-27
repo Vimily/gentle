@@ -2,6 +2,9 @@ PROTO_LANGDIR/
 data/
 ext/standard_kaldi
 ext/mkgraph
+ext/k3
+ext/m3
+exp
 ext/*-test
 ext/*.o
 ext/.depend.mk
